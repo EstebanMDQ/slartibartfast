@@ -1,6 +1,6 @@
 import typer
-from generator import generate_site
-import config
+from .generator import generate_site
+from . import config
 import os
 import http.server
 import socketserver
