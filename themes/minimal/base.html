@@ -1,0 +1,72 @@
+<!-- ...existing code... -->
+<!doctype html>
+<html lang="{{ meta.lang | default('es') }}">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{% block title %}{{ meta.title | default('Untitled') }}{% endblock %}</title>
+    {% block head %}{% endblock %}
+    <style>
+        /* estilos mínimos */
+        :root {
+            color-scheme: light dark;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            margin: 1.25rem;
+            line-height: 1.6;
+        }
+
+        main {
+            max-width: 65ch;
+        }
+
+        a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        header h1 {
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+        }
+
+        footer {
+            margin-top: 3rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>
+            <a href="/">{% block site_title %}{{ meta.site_title | default(meta.title | default('Site')) }}{% endblock
+                %}</a>
+        </h1>
+    </header>
+
+    <main>
+        {% block content %}
+        {{ content | safe }}
+        {% endblock %}
+    </main>
+
+    <footer>
+        {% block footer %}
+        {% if meta.author %}Por {{ meta.author }} • {% endif %}{{ meta.date | default('') }}
+        {% endblock %}
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
+<!--

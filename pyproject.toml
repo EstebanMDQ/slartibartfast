@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "slartibartfast"
+version = "0.1.0"
+description = "A tiny, fast static site generator."
+authors = ["Esteban Soler <esteban@informalthinkers.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "slartibartfast" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.14"
+typer = "^0.19.2"
+jinja2 = "^3.1.6"
+watchdog = "^6.0.0"
+pyyaml = "^6.0.3"
+markdown-it-py = {extras = ["linkify", "plugins"], version = "^4.0.0"}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+ruff = "^0.14.1"
+pre-commit = "^4.3.0"
+
+[tool.poetry.scripts]
+slarti = "slartibartfast.cli:app"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
