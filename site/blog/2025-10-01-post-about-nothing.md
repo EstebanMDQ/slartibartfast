@@ -1,6 +1,7 @@
 ---
 title: Nothing here
 template: page.html
+published: true
 ---
 
 ## Nothing here

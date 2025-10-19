@@ -39,9 +39,11 @@ def test_should_process():
     assert generator.should_process({"published": True}) is True
     assert generator.should_process({"published": False}) is False
     assert generator.should_process({}) is False
-    assert generator.should_process(
-        {"published": True, "publish_date": "2000-01-01"}
-    ) is True
-    assert generator.should_process(
-        {"published": True, "publish_date": "3000-01-01"}
-    ) is False
+    assert (
+        generator.should_process({"published": True, "publish_date": "2000-01-01"})
+        is True
+    )
+    assert (
+        generator.should_process({"published": True, "publish_date": "3000-01-01"})
+        is False
+    )

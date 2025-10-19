@@ -38,11 +38,11 @@ def _extract_config_header(content: str) -> tuple[dict, str]:
     return ({}, content)
 
 
-def should_process(config:dict) -> bool:
+def should_process(config: dict) -> bool:
     """Determine if the site should be processed based on config."""
     published = bool(config.get("published", False))
     try:
-        publish_date = date.fromisoformat(config.get("publish_date", None)) # type: ignore
+        publish_date = date.fromisoformat(config.get("publish_date", None))  # type: ignore
     except (ValueError, TypeError):
         publish_date = None
     return published and (publish_date is None or publish_date <= date.today())
@@ -68,7 +68,6 @@ def template_loader(source_path: str, theme: str, template_name: str):
         raise TemplateNotFound(
             f"Template '{template_name}' not found in theme '{theme}'"
         ) from exc
-
 
 
 def generate_site(path: str, output: str) -> dict:

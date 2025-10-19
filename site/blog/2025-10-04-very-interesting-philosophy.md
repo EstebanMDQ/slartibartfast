@@ -1,6 +1,7 @@
 ---
 title: Very Interesting Philosophy
 template: page.html
+published: true
 ---
 
 ## Very Interesting Philosophy

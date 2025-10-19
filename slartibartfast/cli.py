@@ -27,7 +27,8 @@ def generate_cmd(
     # typer.echo(f"Loaded configuration: {config}")
     typer.echo(f"Generating static site from {path} to {output}...")
     typer.echo(
-        f"Site generation complete: {stats['pages']} pages created, {stats['errors']} errors."
+        f"Site generation complete: {stats['pages']} pages created, "
+        f"{stats['errors']} errors."
     )
 
 
