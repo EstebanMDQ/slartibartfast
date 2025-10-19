@@ -40,9 +40,13 @@ def _extract_config_header(content: str) -> tuple[dict, str]:
 
 def should_process(config:dict) -> bool:
     """Determine if the site should be processed based on config."""
-    published = config.get("published", False)
-    publish_date = config.get("publish_date", None)
-    return published is bool and published and (publish_date is None or publish_date <= date.today())
+    published = bool(config.get("published", False))
+    try:
+        publish_date = date.fromisoformat(config.get("publish_date", None)) # type: ignore
+    except (ValueError, TypeError):
+        publish_date = None
+    return published and (publish_date is None or publish_date <= date.today())
+
 
 def template_loader(source_path: str, theme: str, template_name: str):
     """Load a Jinja2 template from themes/<theme>/<template_name>.
@@ -66,16 +70,6 @@ def template_loader(source_path: str, theme: str, template_name: str):
         ) from exc
 
 
-def generate_page(content: str, config: dict) -> str:
-    """Generate a page by applying a template to content."""
-    page_config, content = _extract_config_header(content)
-    template = template_loader(
-        config["source_path"],
-        config.get("theme", "default"),
-        page_config.get("template", "page.html"),
-    )
-    return template.render(content=md.render(content), meta=page_config)
-
 
 def generate_site(path: str, output: str) -> dict:
     """Generate the static site from content at path to output directory."""
@@ -85,11 +79,17 @@ def generate_site(path: str, output: str) -> dict:
     for filename in os.listdir(path):
         if filename.endswith(".md"):
             with open(os.path.join(path, filename), "r") as file:
-                content = file.read()
-            page = generate_page(content, config)
+                page_config, content = _extract_config_header(file.read())
+                if not should_process(page_config):
+                    continue
+                template = template_loader(
+                    config["source_path"],
+                    config.get("theme", "default"),
+                    page_config.get("template", "page.html"),
+                )
+                page = template.render(content=md.render(content), meta=page_config)
             output_file = os.path.join(output, filename.replace(".md", ".html"))
             with open(output_file, "w") as file:
                 file.write(page)
             stats["pages"] += 1
-
     return stats

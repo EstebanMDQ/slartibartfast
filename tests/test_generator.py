@@ -14,6 +14,7 @@ def test_generate_site_creates_html(tmp_path):
     md = """---
 title: Hello
 author: Tester
+published: true
 ---
 # Hello
 
@@ -32,3 +33,15 @@ This is content.
     html = (out / "hello.html").read_text(encoding="utf-8")
     assert "<html" in html.lower() or "<!doctype html" in html.lower()
     assert "Hello" in html
+
+
+def test_should_process():
+    assert generator.should_process({"published": True}) is True
+    assert generator.should_process({"published": False}) is False
+    assert generator.should_process({}) is False
+    assert generator.should_process(
+        {"published": True, "publish_date": "2000-01-01"}
+    ) is True
+    assert generator.should_process(
+        {"published": True, "publish_date": "3000-01-01"}
+    ) is False
