@@ -71,10 +71,35 @@ def template_loader(source_path: str, theme: str, template_name: str):
         ) from exc
 
 
-def collect_pages_metadata(path: str) -> list[dict]:
+def collect_pages_metadata(path: str, subfolder: str = "") -> list[dict]:
     """Collect metadata from all markdown files in the path."""
     pages_metadata = []
+    if subfolder:
+        subfolder = f"{subfolder}/"
     for filename in os.listdir(path):
+        if os.path.isdir(os.path.join(path, filename)):
+            section_config = load_config(os.path.join(path, filename))
+            section_path = os.path.join(path, filename)
+            section_pages_metadata = collect_pages_metadata(
+                section_path, subfolder=filename
+            )
+            pages_metadata.extend(section_pages_metadata)
+            page_meta = {
+                "filename": f"{subfolder}{filename}/index.html",
+                "url": f"/{filename}/index.html",
+                "title": section_config.get("title", "Blog"),
+                "description": section_config.get("description", ""),
+                "nav_order": section_config.get("nav_order", 999),
+                "in_nav": section_config.get("in_nav", True),
+                "template": section_config.get("template", "list.html"),
+                "pages": section_pages_metadata,
+                "publish_date": section_config.get("publish_date", None),
+                "date": section_config.get("date", date.today().isoformat()),
+                "published": section_config.get("published", True),
+                "config": section_config,
+                "content": section_config.get("content", ""),
+            }
+            pages_metadata.append(page_meta)
         if filename.endswith(".md"):
             filepath = os.path.join(path, filename)
             with open(filepath, "r") as file:
@@ -87,22 +112,22 @@ def collect_pages_metadata(path: str) -> list[dict]:
             # Create page metadata
             default_title = filename.replace(".md", "").replace("-", " ").title()
             page_meta = {
-                "filename": filename,
-                "filepath": filepath,
-                "url": "/" + filename.replace(".md", ".html"),
+                "filename": f"{subfolder}{filename}",
+                "filepath": f"{subfolder}{filepath}",
+                "url": f"/{subfolder}{filename.replace('.md', '.html')}",
                 "title": page_config.get("title", default_title),
                 "description": page_config.get("description", ""),
-                "date": page_config.get("date", None),
+                "date": page_config.get("date", date.today().isoformat()),
                 "publish_date": page_config.get("publish_date", None),
                 "nav_order": page_config.get("nav_order", 999),
-                "in_nav": page_config.get("in_nav", True),
+                "in_nav": page_config.get("in_nav", False),
                 "content": content,
                 "config": page_config,
             }
             pages_metadata.append(page_meta)
 
     # Sort pages by nav_order, then by title
-    pages_metadata.sort(key=lambda x: (x["nav_order"], x["title"]))
+    # pages_metadata.sort(key=lambda x: (x["nav_order"], x["title"]))
     return pages_metadata
 
 
@@ -183,29 +208,45 @@ def generate_site(path: str, output: str) -> dict:
     stats = {"pages": 0, "errors": 0}
     for page_meta in pages_metadata:
         try:
+            # Find which navigation item should be active
+            active_navigation = deepcopy(navigation)
+            page_url = page_meta["url"]
+
+            # If page is in a subfolder (like /blog/article.html),
+            # activate the section's nav item (like /blog/index.html)
+            if "/" in page_url.strip("/"):
+                # Extract "blog" from "/blog/article.html"
+                section_name = page_url.split("/")[1]
+                section_url = f"/{section_name}/index.html"
+
+                # Find and activate the corresponding nav item
+                for nav_item in active_navigation:
+                    if nav_item["url"] == section_url:
+                        nav_item["active"] = True
+                        break
+            else:
+                # For root-level pages, activate exact match
+                for nav_item in active_navigation:
+                    if nav_item["url"] == page_url:
+                        nav_item["active"] = True
+                        break
+
             template = template_loader(
                 config["source_path"],
                 config.get("theme", "default"),
                 page_meta["config"].get("template", "page.html"),
             )
-            current_nav_id = navigation.index(
-                [
-                    item
-                    for item in navigation
-                    if item["nav_order"] == page_meta["nav_order"]
-                ][0]
-            )
-            active_navigation = deepcopy(navigation)
-            active_navigation[current_nav_id]["active"] = True
             page_html = template.render(
                 content=md.render(page_meta["content"]),
                 meta=page_meta["config"],
                 site=site_context,
                 navigation=active_navigation,
+                section_pages=page_meta.get("pages", []),
             )
 
             output_filename = page_meta["filename"].replace(".md", ".html")
             output_file = os.path.join(output, output_filename)
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
             with open(output_file, "w") as file:
                 file.write(page_html)
             stats["pages"] += 1

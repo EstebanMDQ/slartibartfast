@@ -2,6 +2,8 @@
 title: Nothing here
 template: page.html
 published: true
+description: "Learn about our fiord design services"
+
 ---
 
 ## Nothing here

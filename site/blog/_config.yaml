@@ -1,0 +1,5 @@
+title: "Blog"
+description: "A tiny, fast static site generator."
+template: "list.html"
+in_nav: true
+nav_order: 3
