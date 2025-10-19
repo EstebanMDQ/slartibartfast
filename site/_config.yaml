@@ -1,4 +1,4 @@
 title: "Slartibartfast"
 description: "A tiny, fast static site generator."
 base_url: "https://slartibartfast.example.com"
-theme: "minimal"
+theme: "default"

@@ -70,25 +70,134 @@ def template_loader(source_path: str, theme: str, template_name: str):
         ) from exc
 
 
+def collect_pages_metadata(path: str) -> list[dict]:
+    """Collect metadata from all markdown files in the path."""
+    pages_metadata = []
+    for filename in os.listdir(path):
+        if filename.endswith(".md"):
+            filepath = os.path.join(path, filename)
+            with open(filepath, "r") as file:
+                page_config, content = _extract_config_header(file.read())
+
+            # Skip pages that shouldn't be processed
+            if not should_process(page_config):
+                continue
+
+            # Create page metadata
+            default_title = filename.replace(".md", "").replace("-", " ").title()
+            page_meta = {
+                "filename": filename,
+                "filepath": filepath,
+                "url": "/" + filename.replace(".md", ".html"),
+                "title": page_config.get("title", default_title),
+                "description": page_config.get("description", ""),
+                "date": page_config.get("date", None),
+                "publish_date": page_config.get("publish_date", None),
+                "nav_order": page_config.get("nav_order", 999),
+                "in_nav": page_config.get("in_nav", True),
+                "content": content,
+                "config": page_config,
+            }
+            pages_metadata.append(page_meta)
+
+    # Sort pages by nav_order, then by title
+    pages_metadata.sort(key=lambda x: (x["nav_order"], x["title"]))
+    return pages_metadata
+
+
+def generate_navigation(pages_metadata: list[dict]) -> list[dict]:
+    """Generate navigation menu from pages metadata."""
+    nav_items = []
+    for page in pages_metadata:
+        if page["in_nav"]:
+            nav_items.append(
+                {
+                    "url": page["url"],
+                    "title": page["title"],
+                    "description": page["description"],
+                }
+            )
+    return nav_items
+
+
+def generate_sitemap(pages_metadata: list[dict], config: dict) -> str:
+    """Generate XML sitemap from pages metadata."""
+    base_url = config.get("base_url", "")
+    sitemap_entries = []
+
+    for page in pages_metadata:
+        url = base_url.rstrip("/") + page["url"]
+        # Use publish_date or date, fallback to today
+        lastmod = page["publish_date"] or page["date"]
+        if lastmod:
+            try:
+                if isinstance(lastmod, str):
+                    lastmod = date.fromisoformat(lastmod)
+                lastmod_str = lastmod.isoformat()
+            except (ValueError, TypeError):
+                lastmod_str = date.today().isoformat()
+        else:
+            lastmod_str = date.today().isoformat()
+
+        sitemap_entries.append(f"""
+    <url>
+        <loc>{url}</loc>
+        <lastmod>{lastmod_str}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>""")
+
+    sitemap = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{"".join(sitemap_entries)}
+</urlset>"""
+    return sitemap
+
+
 def generate_site(path: str, output: str) -> dict:
     """Generate the static site from content at path to output directory."""
     config = load_config(path)
     os.makedirs(output, exist_ok=True)
+
+    # Step 1: Collect all pages metadata
+    pages_metadata = collect_pages_metadata(path)
+
+    # Step 2: Generate site-wide context
+    site_context = {
+        "config": config,
+        "navigation": generate_navigation(pages_metadata),
+        "pages": pages_metadata,
+        "sitemap_url": "/sitemap.xml",
+    }
+
+    # Step 3: Generate sitemap
+    sitemap_content = generate_sitemap(pages_metadata, config)
+    sitemap_path = os.path.join(output, "sitemap.xml")
+    with open(sitemap_path, "w") as file:
+        file.write(sitemap_content)
+
+    # Step 4: Generate HTML pages
     stats = {"pages": 0, "errors": 0}
-    for filename in os.listdir(path):
-        if filename.endswith(".md"):
-            with open(os.path.join(path, filename), "r") as file:
-                page_config, content = _extract_config_header(file.read())
-                if not should_process(page_config):
-                    continue
-                template = template_loader(
-                    config["source_path"],
-                    config.get("theme", "default"),
-                    page_config.get("template", "page.html"),
-                )
-                page = template.render(content=md.render(content), meta=page_config)
-            output_file = os.path.join(output, filename.replace(".md", ".html"))
+    for page_meta in pages_metadata:
+        try:
+            template = template_loader(
+                config["source_path"],
+                config.get("theme", "default"),
+                page_meta["config"].get("template", "page.html"),
+            )
+            page_html = template.render(
+                content=md.render(page_meta["content"]),
+                meta=page_meta["config"],
+                site=site_context,
+            )
+
+            output_filename = page_meta["filename"].replace(".md", ".html")
+            output_file = os.path.join(output, output_filename)
             with open(output_file, "w") as file:
-                file.write(page)
+                file.write(page_html)
             stats["pages"] += 1
+
+        except Exception as e:
+            print(f"Error processing {page_meta['filename']}: {e}")
+            stats["errors"] += 1
+
     return stats

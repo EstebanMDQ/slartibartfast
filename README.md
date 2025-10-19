@@ -68,6 +68,55 @@ Themes live in the `themes/` directory. A minimal theme is provided at
 `themes/minimal`. Templates are standard Jinja2 templates; pages may specify a
 `template` in their front matter to pick a different template file.
 
+## Navigation and Sitemap
+
+Slartibartfast automatically generates:
+
+- **Navigation menu**: Available in templates as `site.navigation`
+- **XML Sitemap**: Generated at `/sitemap.xml`
+
+### Page metadata for navigation
+
+You can control navigation behavior with front matter:
+
+```yaml
+---
+title: "Page Title"
+description: "Page description for navigation and SEO"
+nav_order: 1          # Lower numbers appear first (default: 999)
+in_nav: true          # Include in navigation menu (default: true)
+---
+```
+
+### Template context
+
+Templates have access to:
+
+- `meta`: Current page metadata
+- `content`: Rendered markdown content
+- `site.config`: Site configuration from `_config.yaml`
+- `site.navigation`: Array of navigation items
+- `site.pages`: Array of all page metadata
+- `site.sitemap_url`: URL to the sitemap (`/sitemap.xml`)
+
+Example template usage:
+
+```html
+<!-- Navigation menu -->
+<nav>
+  <ul>
+    {% for nav_item in site.navigation %}
+    <li><a href="{{ nav_item.url }}">{{ nav_item.title }}</a></li>
+    {% endfor %}
+  </ul>
+</nav>
+
+<!-- List recent pages -->
+{% for page in site.pages[:5] %}
+  <a href="{{ page.url }}">{{ page.title }}</a>
+{% endfor %}
+```
+
 ## Testing
 
 Run the test suite with Poetry:
