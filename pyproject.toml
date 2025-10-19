@@ -23,6 +23,27 @@ pre-commit = "^4.3.0"
 [tool.poetry.scripts]
 slarti = "slartibartfast.cli:app"
 
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+# Enable import sorting with isort rules
+select = ["E", "F", "I"]  # E = pycodestyle errors, F = pyflakes, I = isort
+
+[tool.ruff.lint.isort]
+# Import sorting configuration
+known-first-party = ["slartibartfast"]
+force-single-line = false
+force-sort-within-sections = true
+split-on-trailing-comma = true
+
+[tool.ruff.format]
+# Use double quotes for strings
+quote-style = "double"
+# Indent with spaces
+indent-style = "space"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

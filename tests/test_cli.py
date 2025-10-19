@@ -1,6 +1,7 @@
 from typer.testing import CliRunner
-from slartibartfast import cli
 import yaml
+
+from slartibartfast import cli
 
 
 def test_generate_command_creates_site(tmp_path, monkeypatch):

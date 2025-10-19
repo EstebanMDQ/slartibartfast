@@ -1,11 +1,12 @@
-import typer
-from .generator import generate_site
-from . import config
-import os
-import http.server
-import socketserver
 from functools import partial
+import http.server
+import os
+import socketserver
 
+import typer
+
+from . import config
+from .generator import generate_site
 
 app = typer.Typer(
     help="Slartibartfast: A tiny, fast static site generator.",

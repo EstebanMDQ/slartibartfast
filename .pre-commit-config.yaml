@@ -1,12 +1,14 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9  # versión actual de Ruff
+    rev: v0.14.1  # versión actualizada de Ruff
     hooks:
       - id: ruff
-        args: [--fix]   # aplica correcciones automáticas cuando sea posible
-      - id: ruff-format # formateo (equivalente a black)
+        args: [--fix]   # aplica correcciones automáticas (incluye isort)
+      - id: ruff-format # formateo de código (equivalente a black)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-toml

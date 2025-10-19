@@ -1,12 +1,13 @@
+from datetime import date
 import os
-import yaml
+
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 from markdown_it import MarkdownIt
-from mdit_py_plugins.front_matter import front_matter_plugin
 from mdit_py_plugins.footnote import footnote_plugin
+from mdit_py_plugins.front_matter import front_matter_plugin
+import yaml
 
 from . import config
-
 
 md = (
     MarkdownIt("commonmark", {"breaks": True, "html": True})
@@ -27,7 +28,7 @@ def load_config(path: str) -> dict:
     return config
 
 
-def _extract_config_header(content: str) -> dict:
+def _extract_config_header(content: str) -> tuple[dict, str]:
     """Extract YAML front matter from content."""
     if content.startswith("---"):
         end = content.find("---", 3)
@@ -36,6 +37,12 @@ def _extract_config_header(content: str) -> dict:
             return (yaml.safe_load(front_matter), content[end + 3 :].lstrip())
     return ({}, content)
 
+
+def should_process(config:dict) -> bool:
+    """Determine if the site should be processed based on config."""
+    published = config.get("published", False)
+    publish_date = config.get("publish_date", None)
+    return published is bool and published and (publish_date is None or publish_date <= date.today())
 
 def template_loader(source_path: str, theme: str, template_name: str):
     """Load a Jinja2 template from themes/<theme>/<template_name>.
