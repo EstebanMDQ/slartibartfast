@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import date
 import os
 
@@ -115,8 +116,11 @@ def generate_navigation(pages_metadata: list[dict]) -> list[dict]:
                     "url": page["url"],
                     "title": page["title"],
                     "description": page["description"],
+                    "active": False,
+                    "nav_order": page["nav_order"],
                 }
             )
+    sorted(nav_items, key=lambda x: x["nav_order"])
     return nav_items
 
 
@@ -164,11 +168,11 @@ def generate_site(path: str, output: str) -> dict:
     # Step 2: Generate site-wide context
     site_context = {
         "config": config,
-        "navigation": generate_navigation(pages_metadata),
         "pages": pages_metadata,
         "sitemap_url": "/sitemap.xml",
     }
 
+    navigation = generate_navigation(pages_metadata)
     # Step 3: Generate sitemap
     sitemap_content = generate_sitemap(pages_metadata, config)
     sitemap_path = os.path.join(output, "sitemap.xml")
@@ -184,10 +188,20 @@ def generate_site(path: str, output: str) -> dict:
                 config.get("theme", "default"),
                 page_meta["config"].get("template", "page.html"),
             )
+            current_nav_id = navigation.index(
+                [
+                    item
+                    for item in navigation
+                    if item["nav_order"] == page_meta["nav_order"]
+                ][0]
+            )
+            active_navigation = deepcopy(navigation)
+            active_navigation[current_nav_id]["active"] = True
             page_html = template.render(
                 content=md.render(page_meta["content"]),
                 meta=page_meta["config"],
                 site=site_context,
+                navigation=active_navigation,
             )
 
             output_filename = page_meta["filename"].replace(".md", ".html")

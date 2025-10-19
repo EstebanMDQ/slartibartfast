@@ -8,13 +8,42 @@
     <meta name="description" content="{{ meta.description }}">
     {% endif %}
     <link rel="sitemap" type="application/xml" href="{{ site.sitemap_url }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        header, footer {
+            background-color: #f4f4f4;
+            padding: 1rem;
+            text-align: center;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        nav ul li {
+            display: inline;
+            margin-right: 1rem;
+        }
+        nav ul li.active a {
+            font-weight: bold;
+        }
+        main {
+            padding: 1rem;
+            max-width: 800px;
+            margin: auto;
+        }
+    </style>
 </head>
 <body>
     <header>
         <nav>
             <ul>
-                {% for nav_item in site.navigation %}
-                <li><a href="{{ nav_item.url }}">{{ nav_item.title }}</a></li>
+                {% for nav_item in navigation %}
+                <li {% if nav_item.active %}class="active"{% endif %}><a href="{{ nav_item.url }}">{{ nav_item.title }}</a></li>
                 {% endfor %}
             </ul>
         </nav>
