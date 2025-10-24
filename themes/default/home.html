@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-gradient-to-br from-blue-50 to-purple-50 border-b border-tech-200">
+    <div class="max-w-4xl mx-auto px-6 py-16 md:py-24">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-6xl font-bold text-tech-900 mb-6 leading-tight">
+                {{ meta.title | default("Welcome to TechBlog") }}
+            </h1>
+            {% if meta.description %}
+            <p class="text-xl text-tech-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+                {{ meta.description }}
+            </p>
+            {% endif %}
+
+            <!-- Custom content if any -->
+            {% if content %}
+            <div class="prose prose-lg mx-auto mb-8">
+                {{ content|safe }}
+            </div>
+            {% endif %}
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                {% for nav_item in navigation %}
+                {% if nav_item.title == "Blog" %}
+                <a href="{{ nav_item.url }}"
+                    class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
+                    Read Articles
+                    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+                {% endif %}
+                {% endfor %}
+
+                {% for nav_item in navigation %}
+                {% if nav_item.title == "About" %}
+                <a href="{{ nav_item.url }}"
+                    class="inline-flex items-center justify-center px-6 py-3 border border-tech-300 text-base font-medium rounded-lg text-tech-700 bg-white hover:bg-tech-50 transition-colors duration-200">
+                    Learn More
+                </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Posts Section -->
+<section class="py-16">
+    <div class="max-w-4xl mx-auto px-6">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-3xl font-bold text-tech-900">Latest Articles</h2>
+            {% for nav_item in navigation %}
+            {% if nav_item.title == "Blog" %}
+            <a href="{{ nav_item.url }}" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                View all articles →
+            </a>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {% for page in site.pages[:6] %}
+            {% if page.url != "/" and page.url != "/index.html" %}
+            <article class="group">
+                <a href="{{ page.url }}" class="block">
+                    <div
+                        class="p-6 border border-tech-200 rounded-lg hover:shadow-lg hover:border-blue-300 transition-all duration-200">
+                        <!-- Article Title -->
+                        <h3
+                            class="text-xl font-semibold text-tech-900 group-hover:text-blue-600 transition-colors mb-3 line-clamp-2">
+                            {{ page.title }}
+                        </h3>
+
+                        <!-- Article Description -->
+                        {% if page.description %}
+                        <p class="text-tech-600 mb-4 line-clamp-3">
+                            {{ page.description }}
+                        </p>
+                        {% endif %}
+
+                        <!-- Article Meta -->
+                        <div class="flex items-center justify-between text-sm text-tech-500">
+                            {% if page.date %}
+                            <time datetime="{{ page.date }}">{{ page.date }}</time>
+                            {% endif %}
+
+                            <span class="flex items-center text-blue-600 group-hover:text-blue-700 transition-colors">
+                                Read more
+                                <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </span>
+                        </div>
+
+                        <!-- Tags if available -->
+                        {% if page.config and page.config.tags %}
+                        <div class="flex flex-wrap gap-1 mt-3">
+                            {% for tag in page.config.tags[:3] %}
+                            <span
+                                class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-tech-100 text-tech-700">
+                                {{ tag }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+            </article>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Features/Stats Section -->
+<!-- section class="bg-tech-50 py-16">
+    <div class="max-w-4xl mx-auto px-6">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-tech-900 mb-4">Why Read Our Blog?</h2>
+            <p class="text-tech-600 max-w-2xl mx-auto">
+                Stay updated with the latest in technology, development practices, and industry insights.
+            </p>
+        </div>
+
+        <div class="grid gap-8 md:grid-cols-3">
+            <div class="text-center">
+                <div
+                    class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-tech-900 mb-2">Fast & Current</h3>
+                <p class="text-tech-600">
+                    Get the latest tech trends and updates as they happen.
+                </p>
+            </div>
+
+            <div class="text-center">
+                <div
+                    class="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-tech-900 mb-2">In-Depth Analysis</h3>
+                <p class="text-tech-600">
+                    Deep dives into technologies, tools, and best practices.
+                </p>
+            </div>
+
+            <div class="text-center">
+                <div
+                    class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-tech-900 mb-2">Community Driven</h3>
+                <p class="text-tech-600">
+                    Written by developers, for developers. Real-world insights.
+                </p>
+            </div>
+        </div>
+    </div>
+</section -->
+
+<!-- Recent Posts Section -->
+<section class="py-16">
+    <div class="max-w-4xl mx-auto px-6">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-3xl font-bold text-tech-900">Latest Articles</h2>
+            {% for nav_item in navigation %}
+            {% if nav_item.title == "Blog" %}
+            <a href="{{ nav_item.url }}" class="text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                View all articles →
+            </a>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {% for page in site.pages[:6] %}
+            {% if page.url != "/" and page.url != "/index.html" %}
+            <article class="group">
+                <a href="{{ page.url }}" class="block">
+                    <div
+                        class="p-6 border border-tech-200 rounded-lg hover:shadow-lg hover:border-blue-300 transition-all duration-200">
+                        <!-- Article Title -->
+                        <h3
+                            class="text-xl font-semibold text-tech-900 group-hover:text-blue-600 transition-colors mb-3 line-clamp-2">
+                            {{ page.title }}
+                        </h3>
+
+                        <!-- Article Description -->
+                        {% if page.description %}
+                        <p class="text-tech-600 mb-4 line-clamp-3">
+                            {{ page.description }}
+                        </p>
+                        {% endif %}
+
+                        <!-- Article Meta -->
+                        <div class="flex items-center justify-between text-sm text-tech-500">
+                            {% if page.date %}
+                            <time datetime="{{ page.date }}">{{ page.date }}</time>
+                            {% endif %}
+
+                            <span class="flex items-center text-blue-600 group-hover:text-blue-700 transition-colors">
+                                Read more
+                                <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </span>
+                        </div>
+
+                        <!-- Tags if available -->
+                        {% if page.config and page.config.tags %}
+                        <div class="flex flex-wrap gap-1 mt-3">
+                            {% for tag in page.config.tags[:3] %}
+                            <span
+                                class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-tech-100 text-tech-700">
+                                {{ tag }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+            </article>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}

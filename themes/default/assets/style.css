@@ -1,0 +1,245 @@
+        /* Enhanced code styling with dark mode support */
+        .prose code:not(.hljs):not([class*="language-"]) {
+            @apply bg-tech-100 dark:bg-tech-800 text-tech-800 dark:text-tech-200 px-2 py-1 rounded-md text-sm font-mono border border-tech-200 dark:border-tech-700;
+            font-weight: 500;
+        }
+
+        .prose pre {
+            @apply bg-tech-900 dark:bg-tech-900 text-tech-100 overflow-x-auto rounded-xl border border-tech-700 dark:border-tech-600 shadow-lg my-6;
+            position: relative;
+        }
+
+        .prose pre code {
+            @apply bg-transparent text-inherit p-0 border-0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.875rem;
+            line-height: 1.7;
+            text-shadow: none;
+        }
+
+        /* Code block wrapper with language indicator */
+        .prose pre[class*="language-"] {
+            padding: 1rem 1.5rem;
+            position: relative;
+        }
+
+        .prose pre[class*="language-"]::before {
+            content: attr(data-language);
+            position: absolute;
+            top: 0;
+            right: 1rem;
+            background: #4f46e5;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 0 0 0.5rem 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Language-specific colors for indicators */
+        .prose pre.language-javascript::before {
+            background: #f7df1e;
+            color: #000;
+        }
+
+        .prose pre.language-python::before {
+            background: #3776ab;
+        }
+
+        .prose pre.language-typescript::before {
+            background: #3178c6;
+        }
+
+        .prose pre.language-css::before {
+            background: #1572b6;
+        }
+
+        .prose pre.language-html::before {
+            background: #e34f26;
+        }
+
+        .prose pre.language-json::before {
+            background: #000;
+        }
+
+        .prose pre.language-bash::before {
+            background: #4eaa25;
+        }
+
+        .prose pre.language-shell::before {
+            background: #4eaa25;
+        }
+
+        /* Copy button for code blocks */
+        .code-block-wrapper {
+            position: relative;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+        }
+
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Enhanced blockquotes with dark mode */
+        .prose blockquote {
+            @apply border-l-4 border-blue-500 dark:border-blue-400 bg-gradient-to-r from-blue-50 dark:from-blue-900/30 to-transparent pl-6 py-4 my-6 italic relative;
+            quotes: "" " " "" "'" "'";
+        }
+
+        .prose blockquote::before {
+            content: open-quote;
+            font-size: 4rem;
+            color: #3b82f6;
+            position: absolute;
+            left: 0.5rem;
+            top: -0.5rem;
+            line-height: 1;
+            opacity: 0.3;
+        }
+
+        /* Enhanced tables with dark mode */
+        .prose table {
+            @apply w-full border-collapse border border-tech-200 dark:border-tech-700 rounded-lg overflow-hidden shadow-sm my-6;
+        }
+
+        .prose th,
+        .prose td {
+            @apply border border-tech-200 dark:border-tech-700 px-4 py-3 text-left;
+        }
+
+        .prose th {
+            @apply bg-tech-100 dark:bg-tech-800 font-semibold text-tech-900 dark:text-tech-100;
+        }
+
+        .prose tbody tr:nth-child(even) {
+            @apply bg-tech-50 dark:bg-tech-800/50;
+        }
+
+        .prose tbody tr {
+            @apply text-tech-800 dark:text-tech-200;
+        }
+
+        .prose td {
+            @apply text-tech-700 dark:text-tech-300;
+        }
+
+        .prose tbody tr:hover {
+            @apply bg-blue-50 dark:bg-blue-900/30;
+        }
+
+        /* Mermaid diagram styling with dark mode */
+        .mermaid {
+            @apply my-8 text-center bg-white dark:bg-tech-800 rounded-xl border border-tech-200 dark:border-tech-700 p-4 shadow-sm;
+        }
+
+        /* Enhanced links with dark mode */
+        .prose a:not(.no-underline) {
+            @apply text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-200;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+        }
+
+        .prose a:not(.no-underline):hover {
+            border-bottom-color: currentColor;
+        }
+
+        /* Enhanced lists with dark mode */
+        .prose ul,
+        .prose ol {
+            @apply my-6;
+        }
+
+        .prose li {
+            @apply my-2;
+        }
+
+        .prose li::marker {
+            @apply text-blue-600 dark:text-blue-400;
+        }
+
+        /* Responsive typography with dark mode */
+        .prose {
+            line-height: 1.75;
+            @apply text-tech-800 dark:text-tech-200;
+        }
+
+        /* Paragraphs with proper contrast */
+        .prose p {
+            @apply text-tech-800 dark:text-tech-200 mb-4;
+        }
+
+        /* Enhanced links with dark mode support */
+        .prose a {
+            @apply text-blue-600 dark:text-blue-400 font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors duration-200;
+            text-decoration: underline;
+            text-decoration-color: rgba(59, 130, 246, 0.3);
+            text-underline-offset: 3px;
+        }
+
+        .prose a:hover {
+            text-decoration-color: currentColor;
+        }
+
+        /* Strong text with dark mode */
+        .prose strong {
+            @apply text-tech-900 dark:text-tech-100 font-semibold;
+        }
+
+        /* Emphasized text with dark mode */
+        .prose em {
+            @apply text-tech-700 dark:text-tech-300 italic;
+        }
+
+        .prose h1,
+        .prose h2,
+        .prose h3,
+        .prose h4,
+        .prose h5,
+        .prose h6 {
+            @apply font-bold text-tech-900 dark:text-tech-100 mt-8 mb-4;
+            line-height: 1.25;
+        }
+
+        .prose h1 {
+            @apply text-3xl md:text-4xl;
+        }
+
+        .prose h2 {
+            @apply text-2xl md:text-3xl;
+        }
+
+        .prose h3 {
+            @apply text-xl md:text-2xl;
+        }
+
+        .prose h4 {
+            @apply text-lg md:text-xl;
+        }
+
+        /* Keyboard shortcuts styling with dark mode */
+        .prose kbd {
+            @apply bg-tech-100 dark:bg-tech-700 border border-tech-300 dark:border-tech-600 rounded px-2 py-1 text-sm font-mono shadow-sm;
+            border-bottom-width: 2px;
+        }
+
+        /* Highlight/mark text with dark mode */
+        .prose mark {
+            @apply bg-yellow-200 dark:bg-yellow-800 px-1 rounded;
+        }
