@@ -1,6 +1,7 @@
 from copy import deepcopy
 from datetime import date
 import os
+import shutil
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 from markdown_it import MarkdownIt
@@ -78,7 +79,10 @@ def collect_pages_metadata(path: str, subfolder: str = "") -> list[dict]:
         subfolder = f"{subfolder}/"
     for filename in os.listdir(path):
         if os.path.isdir(os.path.join(path, filename)):
-            section_config = load_config(os.path.join(path, filename))
+            try:
+                section_config = load_config(os.path.join(path, filename))
+            except FileNotFoundError:
+                continue
             section_path = os.path.join(path, filename)
             section_pages_metadata = collect_pages_metadata(
                 section_path, subfolder=filename
@@ -145,7 +149,7 @@ def generate_navigation(pages_metadata: list[dict]) -> list[dict]:
                     "nav_order": page["nav_order"],
                 }
             )
-    sorted(nav_items, key=lambda x: x["nav_order"])
+    nav_items.sort(key=lambda x: x["nav_order"])
     return nav_items
 
 
@@ -182,6 +186,85 @@ def generate_sitemap(pages_metadata: list[dict], config: dict) -> str:
     return sitemap
 
 
+def copy_static_directories(source_path: str, output_path: str) -> int:
+    """Copy directories that don't have _config.yaml to output directory."""
+    copied_dirs = 0
+
+    for item in os.listdir(source_path):
+        item_path = os.path.join(source_path, item)
+
+        # Skip if not a directory
+        if not os.path.isdir(item_path):
+            continue
+
+        # Skip if it has a _config.yaml (these are processed as sections)
+        config_file = os.path.join(item_path, "_config.yaml")
+        if os.path.exists(config_file):
+            continue
+
+        # Skip hidden directories and build output
+        if item.startswith(".") or item == "_build":
+            continue
+
+        # Copy the directory to output
+        output_dir = os.path.join(output_path, item)
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+        shutil.copytree(item_path, output_dir)
+        copied_dirs += 1
+        print(f"Copied static directory: {item}")
+
+    return copied_dirs
+
+
+def copy_theme_assets(source_path: str, theme_name: str, output_path: str) -> int:
+    """Copy non-template files from theme directory to output directory."""
+    copied_files = 0
+
+    # Determine theme directory (prioritize global themes)
+    source_theme_dir = os.path.join(source_path, theme_name)
+    global_theme_dir = os.path.join(config.THEMES_DIR, theme_name)
+
+    # Use global theme if it exists, otherwise use source theme
+    theme_dir = (
+        global_theme_dir if os.path.isdir(global_theme_dir) else source_theme_dir
+    )
+
+    if not os.path.isdir(theme_dir):
+        return 0
+
+    # Define template extensions to skip
+    template_extensions = {".html", ".htm", ".md", ".txt"}
+    skip_files = {"README.md", "README.txt"}
+
+    for item in os.listdir(theme_dir):
+        item_path = os.path.join(theme_dir, item)
+
+        # Skip hidden files and specific files
+        if item.startswith(".") or item in skip_files:
+            continue
+
+        if os.path.isfile(item_path):
+            # Skip template files but copy other assets like CSS, JS, images
+            file_ext = os.path.splitext(item)[1].lower()
+            if file_ext not in template_extensions:
+                output_file = os.path.join(output_path, item)
+                shutil.copy2(item_path, output_file)
+                copied_files += 1
+                print(f"Copied theme asset: {item}")
+
+        elif os.path.isdir(item_path):
+            # Copy subdirectories (like assets/, css/, js/, images/)
+            output_subdir = os.path.join(output_path, item)
+            if os.path.exists(output_subdir):
+                shutil.rmtree(output_subdir)
+            shutil.copytree(item_path, output_subdir)
+            copied_files += 1
+            print(f"Copied theme directory: {item}")
+
+    return copied_files
+
+
 def generate_site(path: str, output: str) -> dict:
     """Generate the static site from content at path to output directory."""
     config = load_config(path)
@@ -198,14 +281,28 @@ def generate_site(path: str, output: str) -> dict:
     }
 
     navigation = generate_navigation(pages_metadata)
-    # Step 3: Generate sitemap
+
+    # Step 3: Copy static directories (images, assets, etc.)
+    static_dirs_copied = copy_static_directories(path, output)
+
+    # Step 4: Copy theme assets (CSS, JS, images, etc.)
+    theme_assets_copied = copy_theme_assets(
+        path, config.get("theme", "default"), output
+    )
+
+    # Step 5: Generate sitemap
     sitemap_content = generate_sitemap(pages_metadata, config)
     sitemap_path = os.path.join(output, "sitemap.xml")
     with open(sitemap_path, "w") as file:
         file.write(sitemap_content)
 
-    # Step 4: Generate HTML pages
-    stats = {"pages": 0, "errors": 0}
+    # Step 6: Generate HTML pages
+    stats = {
+        "pages": 0,
+        "errors": 0,
+        "static_dirs": static_dirs_copied,
+        "theme_assets": theme_assets_copied,
+    }
     for page_meta in pages_metadata:
         try:
             # Find which navigation item should be active

@@ -18,13 +18,18 @@ def generate_cmd(
     ),
 ):
     """Generate the static site."""
+    typer.echo(f"Generating static site from {path} to {output}...")
     stats = generate_site(path, output)
     # typer.echo(f"Loaded configuration: {config}")
-    typer.echo(f"Generating static site from {path} to {output}...")
-    typer.echo(
-        f"Site generation complete: {stats['pages']} pages created, "
-        f"{stats['errors']} errors."
-    )
+
+    message = f"Site generation complete: {stats['pages']} pages created"
+    if stats.get("static_dirs", 0) > 0:
+        message += f", {stats['static_dirs']} static directories copied"
+    if stats.get("theme_assets", 0) > 0:
+        message += f", {stats['theme_assets']} theme assets copied"
+    message += f", {stats['errors']} errors."
+
+    typer.echo(message)
 
 
 @app.command("serve")
