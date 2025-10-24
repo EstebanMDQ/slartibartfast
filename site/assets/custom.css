@@ -1,0 +1,14 @@
+/* Custom CSS for the site */
+.custom-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.custom-button:hover {
+    transform: translateY(-2px);
+}
