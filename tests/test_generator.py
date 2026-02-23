@@ -1,3 +1,6 @@
+from datetime import date
+
+import pytest
 import yaml
 
 from slartibartfast import generator
@@ -419,3 +422,459 @@ Content here.
     finally:
         # Restore original config
         config.THEMES_DIR = original_themes_dir
+
+
+# ---------------------------------------------------------------------------
+# Task 1.2: _extract_config_header() tests
+# ---------------------------------------------------------------------------
+
+
+class TestExtractConfigHeader:
+    """Tests for _extract_config_header()."""
+
+    def test_valid_front_matter(self):
+        """Valid YAML front matter is extracted correctly."""
+        content = "---\ntitle: Hello\ndescription: A page\n---\n# Body"
+        meta, body = generator._extract_config_header(content)
+        assert meta == {"title": "Hello", "description": "A page"}
+        assert body == "# Body"
+
+    def test_multiple_fields(self):
+        """Front matter with several fields all round-trip."""
+        content = (
+            "---\n"
+            "title: My Page\n"
+            "nav_order: 2\n"
+            "in_nav: true\n"
+            "published: true\n"
+            "---\nContent here"
+        )
+        meta, body = generator._extract_config_header(content)
+        assert meta["title"] == "My Page"
+        assert meta["nav_order"] == 2
+        assert meta["in_nav"] is True
+        assert meta["published"] is True
+        assert body == "Content here"
+
+    def test_missing_end_delimiter(self):
+        """No closing --- returns empty dict and full content."""
+        content = "---\ntitle: Unclosed\nSome body text"
+        meta, body = generator._extract_config_header(content)
+        assert meta == {}
+        assert body == content
+
+    def test_empty_content(self):
+        """Empty string returns empty dict and empty string."""
+        meta, body = generator._extract_config_header("")
+        assert meta == {}
+        assert body == ""
+
+    def test_no_front_matter(self):
+        """Content without front matter delimiter returns unchanged."""
+        content = "# Just a heading\n\nSome text."
+        meta, body = generator._extract_config_header(content)
+        assert meta == {}
+        assert body == content
+
+    def test_malformed_yaml_raises(self):
+        """Malformed YAML in front matter raises a YAML error."""
+        content = "---\n: :\n  bad:\n    - [invalid\n---\nBody"
+        with pytest.raises(yaml.YAMLError):
+            generator._extract_config_header(content)
+
+    def test_empty_front_matter(self):
+        """Empty front matter block (just delimiters) returns None meta."""
+        content = "---\n---\nBody text"
+        meta, body = generator._extract_config_header(content)
+        # yaml.safe_load("") returns None
+        assert meta is None
+        assert body == "Body text"
+
+    def test_body_whitespace_is_stripped(self):
+        """Leading whitespace after front matter is stripped."""
+        content = "---\ntitle: Test\n---\n\n\n  Body"
+        _, body = generator._extract_config_header(content)
+        # lstrip() removes leading newlines/spaces
+        assert body.startswith("Body")
+
+
+# ---------------------------------------------------------------------------
+# Task 1.3: load_config() tests
+# ---------------------------------------------------------------------------
+
+
+class TestLoadConfig:
+    """Tests for load_config()."""
+
+    def test_missing_config_file_raises(self, tmp_path):
+        """Missing _config.yaml raises FileNotFoundError."""
+        with pytest.raises(FileNotFoundError, match="Configuration file not found"):
+            generator.load_config(str(tmp_path))
+
+    def test_invalid_yaml_raises(self, tmp_path):
+        """Malformed YAML in config file raises an error."""
+        (tmp_path / "_config.yaml").write_text(
+            ": :\n  bad:\n    - [invalid", encoding="utf-8"
+        )
+        with pytest.raises(yaml.YAMLError):
+            generator.load_config(str(tmp_path))
+
+    def test_valid_config_returns_dict_with_source_path(self, tmp_path):
+        """Valid config file returns dict with source_path set."""
+        cfg = {"theme": "minimal", "title": "My Site"}
+        (tmp_path / "_config.yaml").write_text(
+            yaml.safe_dump(cfg), encoding="utf-8"
+        )
+        result = generator.load_config(str(tmp_path))
+        assert isinstance(result, dict)
+        assert result["theme"] == "minimal"
+        assert result["title"] == "My Site"
+        assert result["source_path"] == str(tmp_path)
+
+    def test_empty_yaml_raises(self, tmp_path):
+        """Empty YAML file (safe_load returns None) causes TypeError."""
+        (tmp_path / "_config.yaml").write_text("", encoding="utf-8")
+        # yaml.safe_load("") returns None, then config["source_path"] fails
+        with pytest.raises(TypeError):
+            generator.load_config(str(tmp_path))
+
+    def test_config_preserves_all_keys(self, tmp_path):
+        """All keys from the YAML are preserved in the returned dict."""
+        cfg = {
+            "theme": "default",
+            "base_url": "https://example.com",
+            "title": "Test",
+            "description": "A site",
+        }
+        (tmp_path / "_config.yaml").write_text(
+            yaml.safe_dump(cfg), encoding="utf-8"
+        )
+        result = generator.load_config(str(tmp_path))
+        for key, value in cfg.items():
+            assert result[key] == value
+
+
+# ---------------------------------------------------------------------------
+# Task 1.4: generate_navigation() tests
+# ---------------------------------------------------------------------------
+
+
+class TestGenerateNavigation:
+    """Tests for generate_navigation()."""
+
+    def test_empty_input(self):
+        """Empty list returns empty navigation."""
+        assert generator.generate_navigation([]) == []
+
+    def test_pages_with_in_nav_false_excluded(self):
+        """Pages with in_nav=False are excluded from navigation."""
+        pages = [
+            {
+                "url": "/about.html",
+                "title": "About",
+                "description": "",
+                "nav_order": 1,
+                "in_nav": True,
+            },
+            {
+                "url": "/hidden.html",
+                "title": "Hidden",
+                "description": "",
+                "nav_order": 2,
+                "in_nav": False,
+            },
+        ]
+        nav = generator.generate_navigation(pages)
+        assert len(nav) == 1
+        assert nav[0]["title"] == "About"
+
+    def test_sorting_by_nav_order(self):
+        """Navigation items are sorted by nav_order."""
+        pages = [
+            {
+                "url": "/c.html",
+                "title": "C",
+                "description": "",
+                "nav_order": 3,
+                "in_nav": True,
+            },
+            {
+                "url": "/a.html",
+                "title": "A",
+                "description": "",
+                "nav_order": 1,
+                "in_nav": True,
+            },
+            {
+                "url": "/b.html",
+                "title": "B",
+                "description": "",
+                "nav_order": 2,
+                "in_nav": True,
+            },
+        ]
+        nav = generator.generate_navigation(pages)
+        assert [item["title"] for item in nav] == ["A", "B", "C"]
+
+    def test_same_nav_order_preserves_input_order(self):
+        """Pages with same nav_order keep their relative input order."""
+        pages = [
+            {
+                "url": "/x.html",
+                "title": "X",
+                "description": "",
+                "nav_order": 1,
+                "in_nav": True,
+            },
+            {
+                "url": "/y.html",
+                "title": "Y",
+                "description": "",
+                "nav_order": 1,
+                "in_nav": True,
+            },
+        ]
+        nav = generator.generate_navigation(pages)
+        assert len(nav) == 2
+        # Python's sort is stable, so original order is preserved
+        assert nav[0]["title"] == "X"
+        assert nav[1]["title"] == "Y"
+
+    def test_all_pages_excluded(self):
+        """If all pages have in_nav=False, result is empty."""
+        pages = [
+            {
+                "url": "/a.html",
+                "title": "A",
+                "description": "",
+                "nav_order": 1,
+                "in_nav": False,
+            },
+        ]
+        assert generator.generate_navigation(pages) == []
+
+    def test_nav_items_have_active_false(self):
+        """All generated nav items start with active=False."""
+        pages = [
+            {
+                "url": "/home.html",
+                "title": "Home",
+                "description": "Main",
+                "nav_order": 0,
+                "in_nav": True,
+            },
+        ]
+        nav = generator.generate_navigation(pages)
+        assert nav[0]["active"] is False
+
+    def test_nav_item_structure(self):
+        """Nav items contain the expected keys."""
+        pages = [
+            {
+                "url": "/about.html",
+                "title": "About",
+                "description": "About us",
+                "nav_order": 5,
+                "in_nav": True,
+            },
+        ]
+        nav = generator.generate_navigation(pages)
+        item = nav[0]
+        assert item == {
+            "url": "/about.html",
+            "title": "About",
+            "description": "About us",
+            "active": False,
+            "nav_order": 5,
+        }
+
+
+# ---------------------------------------------------------------------------
+# Task 1.5: generate_sitemap() tests
+# ---------------------------------------------------------------------------
+
+
+class TestGenerateSitemap:
+    """Tests for generate_sitemap()."""
+
+    def test_empty_pages_produces_valid_xml(self):
+        """Empty pages list produces a valid but empty sitemap."""
+        sitemap = generator.generate_sitemap(
+            [], {"base_url": "https://example.com"}
+        )
+        assert '<?xml version="1.0"' in sitemap
+        assert "<urlset" in sitemap
+        assert "</urlset>" in sitemap
+        assert "<url>" not in sitemap
+
+    def test_missing_base_url_uses_empty_string(self):
+        """Missing base_url in config defaults to empty string."""
+        pages = [
+            {
+                "url": "/page.html",
+                "publish_date": None,
+                "date": "2024-01-01",
+            },
+        ]
+        sitemap = generator.generate_sitemap(pages, {})
+        assert "<loc>/page.html</loc>" in sitemap
+
+    def test_invalid_date_falls_back_to_today(self):
+        """Invalid date string falls back to today's date."""
+        pages = [
+            {
+                "url": "/page.html",
+                "publish_date": "not-a-date",
+                "date": None,
+            },
+        ]
+        sitemap = generator.generate_sitemap(pages, {"base_url": ""})
+        today_str = date.today().isoformat()
+        assert f"<lastmod>{today_str}</lastmod>" in sitemap
+
+    def test_valid_sitemap_structure(self):
+        """Sitemap with pages has correct XML structure."""
+        pages = [
+            {
+                "url": "/index.html",
+                "publish_date": "2024-06-15",
+                "date": "2024-06-01",
+            },
+            {
+                "url": "/about.html",
+                "publish_date": None,
+                "date": "2024-05-01",
+            },
+        ]
+        sitemap = generator.generate_sitemap(
+            pages, {"base_url": "https://example.com"}
+        )
+        assert sitemap.count("<url>") == 2
+        assert sitemap.count("</url>") == 2
+        assert "<loc>https://example.com/index.html</loc>" in sitemap
+        assert "<loc>https://example.com/about.html</loc>" in sitemap
+        assert "<lastmod>2024-06-15</lastmod>" in sitemap
+        assert "<lastmod>2024-05-01</lastmod>" in sitemap
+        assert "<changefreq>weekly</changefreq>" in sitemap
+        assert "<priority>0.8</priority>" in sitemap
+
+    def test_base_url_trailing_slash_stripped(self):
+        """Trailing slash on base_url is stripped to avoid double slashes."""
+        pages = [
+            {
+                "url": "/page.html",
+                "publish_date": None,
+                "date": "2024-01-01",
+            },
+        ]
+        sitemap = generator.generate_sitemap(
+            pages, {"base_url": "https://example.com/"}
+        )
+        assert "<loc>https://example.com/page.html</loc>" in sitemap
+
+    def test_publish_date_takes_precedence_over_date(self):
+        """publish_date is used over date when both are present."""
+        pages = [
+            {
+                "url": "/page.html",
+                "publish_date": "2024-12-25",
+                "date": "2024-01-01",
+            },
+        ]
+        sitemap = generator.generate_sitemap(pages, {"base_url": ""})
+        assert "<lastmod>2024-12-25</lastmod>" in sitemap
+        assert "2024-01-01" not in sitemap
+
+    def test_date_object_handled(self):
+        """date objects (not just strings) are handled correctly."""
+        pages = [
+            {
+                "url": "/page.html",
+                "publish_date": date(2024, 3, 15),
+                "date": "2024-01-01",
+            },
+        ]
+        sitemap = generator.generate_sitemap(pages, {"base_url": ""})
+        assert "<lastmod>2024-03-15</lastmod>" in sitemap
+
+
+# ---------------------------------------------------------------------------
+# Task 1.6: generate_site() error path tests
+# ---------------------------------------------------------------------------
+
+
+class TestGenerateSiteErrors:
+    """Tests for generate_site() error paths."""
+
+    def test_missing_config_raises(self, tmp_path):
+        """generate_site raises FileNotFoundError when no _config.yaml."""
+        src = tmp_path / "site"
+        src.mkdir()
+        out = tmp_path / "out"
+        with pytest.raises(FileNotFoundError):
+            generator.generate_site(str(src), str(out))
+
+    def test_template_not_found_increments_errors(self, tmp_path):
+        """A page referencing a missing template increments the error count."""
+        src = tmp_path / "site"
+        src.mkdir()
+
+        cfg = {"theme": "minimal"}
+        (src / "_config.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+
+        # Page that references a template that doesn't exist
+        md = (
+            "---\ntitle: Test\npublished: true\n"
+            "template: nonexistent.html\n---\nBody"
+        )
+        (src / "page.md").write_text(md, encoding="utf-8")
+
+        out = tmp_path / "out"
+        stats = generator.generate_site(str(src), str(out))
+        assert stats["errors"] >= 1
+        assert not (out / "page.html").exists()
+
+    def test_missing_theme_increments_errors(self, tmp_path):
+        """Pages with a theme that doesn't exist result in errors."""
+        src = tmp_path / "site"
+        src.mkdir()
+
+        cfg = {"theme": "totally_fake_theme_xyz"}
+        (src / "_config.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+
+        md = "---\ntitle: Test\npublished: true\n---\nBody"
+        (src / "page.md").write_text(md, encoding="utf-8")
+
+        out = tmp_path / "out"
+        stats = generator.generate_site(str(src), str(out))
+        assert stats["errors"] >= 1
+
+    def test_output_directory_created(self, tmp_path):
+        """generate_site creates the output directory if it doesn't exist."""
+        src = tmp_path / "site"
+        src.mkdir()
+
+        cfg = {"theme": "minimal"}
+        (src / "_config.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+
+        out = tmp_path / "nested" / "output"
+        assert not out.exists()
+        generator.generate_site(str(src), str(out))
+        assert out.exists()
+
+    def test_sitemap_always_generated(self, tmp_path):
+        """Sitemap XML is generated even when there are no pages."""
+        src = tmp_path / "site"
+        src.mkdir()
+
+        cfg = {"theme": "minimal"}
+        (src / "_config.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+
+        out = tmp_path / "out"
+        stats = generator.generate_site(str(src), str(out))
+        assert stats["pages"] == 0
+        assert stats["errors"] == 0
+        assert (out / "sitemap.xml").exists()
+
+        sitemap = (out / "sitemap.xml").read_text(encoding="utf-8")
+        assert '<?xml version="1.0"' in sitemap

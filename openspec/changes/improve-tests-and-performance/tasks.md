@@ -1,11 +1,11 @@
 ## 1. Add missing unit tests
 
 - [x] 1.1 Create `tests/test_server.py` with tests for `ReloadEventHandler` (on_modified, on_created) and `serve()` function setup
-- [ ] 1.2 Add direct tests for `_extract_config_header()`: valid front matter, missing end delimiter, empty content, malformed YAML
-- [ ] 1.3 Add direct tests for `load_config()`: missing config file raises `FileNotFoundError`, invalid YAML handling
-- [ ] 1.4 Add tests for `generate_navigation()`: empty input, pages with `in_nav=False`, sorting by `nav_order`
-- [ ] 1.5 Add edge case tests for `generate_sitemap()`: empty pages list, missing `base_url`, invalid date formats
-- [ ] 1.6 Add tests for `generate_site()` error paths: template not found, write permission errors
+- [x] 1.2 Add direct tests for `_extract_config_header()`: valid front matter, missing end delimiter, empty content, malformed YAML
+- [x] 1.3 Add direct tests for `load_config()`: missing config file raises `FileNotFoundError`, invalid YAML handling
+- [x] 1.4 Add tests for `generate_navigation()`: empty input, pages with `in_nav=False`, sorting by `nav_order`
+- [x] 1.5 Add edge case tests for `generate_sitemap()`: empty pages list, missing `base_url`, invalid date formats
+- [x] 1.6 Add tests for `generate_site()` error paths: template not found, write permission errors
 
 ## 2. Performance optimizations
 
