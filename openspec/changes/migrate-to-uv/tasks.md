@@ -14,8 +14,8 @@
 
 ## 3. Update documentation
 
-- [ ] 3.1 Update `README.md` to replace all `poetry` commands with `uv` equivalents
-- [ ] 3.2 Update `openspec/project.md` to reference uv as the package manager
+- [x] 3.1 Update `README.md` to replace all `poetry` commands with `uv` equivalents
+- [x] 3.2 Update `openspec/project.md` to reference uv as the package manager
 
 ## 4. Verify
 

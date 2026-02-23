@@ -15,11 +15,11 @@ tries to be tidy and practical rather than overwhelmingly clever.
 
 ## Install
 
-Recommended: use Poetry (project already includes a `pyproject.toml`). From the
-project root:
+Recommended: use [uv](https://docs.astral.sh/uv/) (project already includes a
+`pyproject.toml`). From the project root:
 
 ```bash
-poetry install
+uv sync
 ```
 
 This will create a virtual environment and install runtime + dev dependencies.
@@ -36,14 +36,14 @@ python -m pip install "typer" "jinja2" "pyyaml" "markdown-it-py[plugins]" pytest
 
 ## Quick usage
 
-The package exposes a CLI via the `slarti` script (installed by Poetry)
+The package exposes a CLI via the `slarti` script (installed by uv)
 or you can run the Typer app directly.
 
 Generate a site from a content directory:
 
 ```bash
-# using Poetry-managed script
-poetry run slarti generate path/to/content --output _build
+# using uv-managed script
+uv run slarti generate path/to/content --output _build
 
 # or run the module directly
 python -m slartibartfast.cli generate path/to/content --output _build
@@ -53,7 +53,7 @@ Serve a generated site locally (serves files from the given directory on port
 8000):
 
 ```bash
-poetry run slarti serve --path _build
+uv run slarti serve --path _build
 # or
 python -m slartibartfast.cli serve --path _build
 ```
@@ -119,10 +119,10 @@ Example template usage:
 
 ## Testing
 
-Run the test suite with Poetry:
+Run the test suite with uv:
 
 ```bash
-poetry run pytest -q
+uv run pytest -q
 ```
 
 Or with pytest directly if you set `PYTHONPATH` to the project root:
@@ -134,7 +134,7 @@ PYTHONPATH=. pytest -q
 ## Contributing
 
 Contributions are welcome. If you're making changes, prefer small, focused
-PRs. Add tests for new behavior and run `poetry run pytest` before opening the
+PRs. Add tests for new behavior and run `uv run pytest` before opening the
 PR.
 
 ## License
