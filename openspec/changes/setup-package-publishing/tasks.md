@@ -7,15 +7,15 @@
 
 ## 2. Add PyPI metadata
 
-- [ ] 2.1 Add classifiers (Development Status, License, Programming Language, Topic) to `pyproject.toml`
-- [ ] 2.2 Add keywords to `pyproject.toml`
-- [ ] 2.3 Add project URLs (Homepage, Repository, Issues) to `pyproject.toml`
+- [x] 2.1 Add classifiers (Development Status, License, Programming Language, Topic) to `pyproject.toml`
+- [x] 2.2 Add keywords to `pyproject.toml`
+- [x] 2.3 Add project URLs (Homepage, Repository, Issues) to `pyproject.toml`
 
 ## 3. Resolve version management
 
-- [ ] 3.1 Check for version in `slartibartfast/__init__.py` and `pyproject.toml`
-- [ ] 3.2 Choose single source of truth for version (prefer `pyproject.toml` with dynamic reading, or `__init__.py` with hatch-vcs)
-- [ ] 3.3 Remove duplicate version definition
+- [x] 3.1 Check for version in `slartibartfast/__init__.py` and `pyproject.toml`
+- [x] 3.2 Choose single source of truth for version (prefer `pyproject.toml` with dynamic reading, or `__init__.py` with hatch-vcs)
+- [x] 3.3 Remove duplicate version definition
 
 ## 4. Build artifacts and release infrastructure
 
