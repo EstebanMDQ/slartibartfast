@@ -3,3 +3,9 @@ __pycache__/
 _build/
 .venv/
 .DS_Store
+dist/
+build/
+*.egg-info
+
+# Claude orchestrator work state
+.claude/orchestrator/

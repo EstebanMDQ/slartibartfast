@@ -1,0 +1,23 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+
+      - run: uv build
+
+      # Trusted publisher must be configured on PyPI:
+      # https://docs.pypi.org/trusted-publishers/adding-a-publisher/
+      - uses: pypa/gh-action-pypi-publish@release/v1

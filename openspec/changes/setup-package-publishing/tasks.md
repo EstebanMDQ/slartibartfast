@@ -19,10 +19,10 @@
 
 ## 4. Build artifacts and release infrastructure
 
-- [ ] 4.1 Add `dist/`, `build/`, `*.egg-info` to `.gitignore`
-- [ ] 4.2 Create `CHANGELOG.md` with initial 0.1.0 entry
-- [ ] 4.3 Create `.github/workflows/ci.yml` - lint with ruff, test with pytest on Python 3.10-3.13
-- [ ] 4.4 Create `.github/workflows/publish.yml` - build and publish to PyPI on tagged releases
+- [x] 4.1 Add `dist/`, `build/`, `*.egg-info` to `.gitignore`
+- [x] 4.2 Create `CHANGELOG.md` with initial 0.1.0 entry
+- [x] 4.3 Create `.github/workflows/ci.yml` - lint with ruff, test with pytest on Python 3.10-3.13
+- [x] 4.4 Create `.github/workflows/publish.yml` - build and publish to PyPI on tagged releases
 
 ## 5. Verify
 
