@@ -9,9 +9,9 @@
 
 ## 2. Performance optimizations
 
-- [ ] 2.1 Cache the Jinja2 `Environment` per site build in `generate_site()` instead of creating a new one in `template_loader()` for each page
-- [ ] 2.2 Replace `deepcopy(navigation)` per page with setting/resetting active flags in-place
-- [ ] 2.3 Replace `os.listdir()` + `os.path.isdir()` / `os.path.exists()` with `os.scandir()` in `collect_pages_metadata()` and `copy_static_directories()`
+- [x] 2.1 Cache the Jinja2 `Environment` per site build in `generate_site()` instead of creating a new one in `template_loader()` for each page
+- [x] 2.2 Replace `deepcopy(navigation)` per page with setting/resetting active flags in-place
+- [x] 2.3 Replace `os.listdir()` + `os.path.isdir()` / `os.path.exists()` with `os.scandir()` in `collect_pages_metadata()` and `copy_static_directories()`
 
 ## 3. Verify
 

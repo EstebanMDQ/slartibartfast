@@ -1,4 +1,3 @@
-from copy import deepcopy
 from datetime import date
 import os
 import shutil
@@ -50,20 +49,29 @@ def should_process(config: dict) -> bool:
     return published and (publish_date is None or publish_date <= date.today())
 
 
-def template_loader(source_path: str, theme: str, template_name: str):
+def template_loader(
+    source_path: str,
+    theme: str,
+    template_name: str,
+    env: Environment | None = None,
+):
     """Load a Jinja2 template from themes/<theme>/<template_name>.
 
     If template_name contains a slash (e.g. "other_theme/page.html"), the
     first path segment will be treated as the theme name and override the
     `theme` argument.
+
+    When *env* is provided the existing Jinja2 Environment is reused,
+    avoiding the cost of creating a new FileSystemLoader per page.
     """
 
-    source_theme_dir = os.path.join(source_path, theme)
-    theme_dir = os.path.join(config.THEMES_DIR, theme)
-    if not os.path.isdir(theme_dir) and not os.path.isdir(source_theme_dir):
-        raise FileNotFoundError(f"Theme not found: {theme}")
+    if env is None:
+        source_theme_dir = os.path.join(source_path, theme)
+        theme_dir = os.path.join(config.THEMES_DIR, theme)
+        if not os.path.isdir(theme_dir) and not os.path.isdir(source_theme_dir):
+            raise FileNotFoundError(f"Theme not found: {theme}")
+        env = Environment(loader=FileSystemLoader([source_theme_dir, theme_dir]))
 
-    env = Environment(loader=FileSystemLoader([source_theme_dir, theme_dir]))
     try:
         return env.get_template(template_name)
     except TemplateNotFound as exc:
@@ -77,20 +85,19 @@ def collect_pages_metadata(path: str, subfolder: str = "") -> list[dict]:
     pages_metadata = []
     if subfolder:
         subfolder = f"{subfolder}/"
-    for filename in os.listdir(path):
-        if os.path.isdir(os.path.join(path, filename)):
+    for entry in os.scandir(path):
+        if entry.is_dir():
             try:
-                section_config = load_config(os.path.join(path, filename))
+                section_config = load_config(entry.path)
             except FileNotFoundError:
                 continue
-            section_path = os.path.join(path, filename)
             section_pages_metadata = collect_pages_metadata(
-                section_path, subfolder=filename
+                entry.path, subfolder=entry.name
             )
             pages_metadata.extend(section_pages_metadata)
             page_meta = {
-                "filename": f"{subfolder}{filename}/index.html",
-                "url": f"/{filename}/index.html",
+                "filename": f"{subfolder}{entry.name}/index.html",
+                "url": f"/{entry.name}/index.html",
                 "title": section_config.get("title", "Blog"),
                 "description": section_config.get("description", ""),
                 "nav_order": section_config.get("nav_order", 999),
@@ -104,9 +111,8 @@ def collect_pages_metadata(path: str, subfolder: str = "") -> list[dict]:
                 "content": section_config.get("content", ""),
             }
             pages_metadata.append(page_meta)
-        if filename.endswith(".md"):
-            filepath = os.path.join(path, filename)
-            with open(filepath, "r") as file:
+        if entry.name.endswith(".md"):
+            with open(entry.path, "r") as file:
                 page_config, content = _extract_config_header(file.read())
 
             # Skip pages that shouldn't be processed
@@ -114,11 +120,11 @@ def collect_pages_metadata(path: str, subfolder: str = "") -> list[dict]:
                 continue
 
             # Create page metadata
-            default_title = filename.replace(".md", "").replace("-", " ").title()
+            default_title = entry.name.replace(".md", "").replace("-", " ").title()
             page_meta = {
-                "filename": f"{subfolder}{filename}",
-                "filepath": f"{subfolder}{filepath}",
-                "url": f"/{subfolder}{filename.replace('.md', '.html')}",
+                "filename": f"{subfolder}{entry.name}",
+                "filepath": f"{subfolder}{entry.path}",
+                "url": f"/{subfolder}{entry.name.replace('.md', '.html')}",
                 "title": page_config.get("title", default_title),
                 "description": page_config.get("description", ""),
                 "date": page_config.get("date", date.today().isoformat()),
@@ -192,29 +198,27 @@ def copy_static_directories(
     """Copy directories that don't have _config.yaml to output directory."""
     copied_dirs = 0
 
-    for item in os.listdir(source_path):
-        item_path = os.path.join(source_path, item)
-
+    for entry in os.scandir(source_path):
         # Skip if not a directory
-        if not os.path.isdir(item_path):
+        if not entry.is_dir():
             continue
 
         # Skip if it has a _config.yaml (these are processed as sections)
-        config_file = os.path.join(item_path, "_config.yaml")
+        config_file = os.path.join(entry.path, "_config.yaml")
         if os.path.exists(config_file):
             continue
 
         # Skip hidden directories and build output
-        if item.startswith(".") or item == output_dir:
+        if entry.name.startswith(".") or entry.name == output_dir:
             continue
 
         # Copy the directory to output
-        dest_dir = os.path.join(output_path, item)
+        dest_dir = os.path.join(output_path, entry.name)
         if os.path.exists(dest_dir):
             shutil.rmtree(dest_dir)
-        shutil.copytree(item_path, dest_dir)
+        shutil.copytree(entry.path, dest_dir)
         copied_dirs += 1
-        print(f"Copied static directory: {item}")
+        print(f"Copied static directory: {entry.name}")
 
     return copied_dirs
 
@@ -269,7 +273,7 @@ def copy_theme_assets(source_path: str, theme_name: str, output_path: str) -> in
 
 def generate_site(path: str, output: str) -> dict:
     """Generate the static site from content at path to output directory."""
-    config = load_config(path)
+    site_config = load_config(path)
     os.makedirs(output, exist_ok=True)
 
     # Step 1: Collect all pages metadata
@@ -277,7 +281,7 @@ def generate_site(path: str, output: str) -> dict:
 
     # Step 2: Generate site-wide context
     site_context = {
-        "config": config,
+        "config": site_config,
         "pages": pages_metadata,
         "sitemap_url": "/sitemap.xml",
     }
@@ -290,11 +294,11 @@ def generate_site(path: str, output: str) -> dict:
 
     # Step 4: Copy theme assets (CSS, JS, images, etc.)
     theme_assets_copied = copy_theme_assets(
-        path, config.get("theme", "default"), output
+        path, site_config.get("theme", "default"), output
     )
 
     # Step 5: Generate sitemap
-    sitemap_content = generate_sitemap(pages_metadata, config)
+    sitemap_content = generate_sitemap(pages_metadata, site_config)
     sitemap_path = os.path.join(output, "sitemap.xml")
     with open(sitemap_path, "w") as file:
         file.write(sitemap_content)
@@ -306,43 +310,55 @@ def generate_site(path: str, output: str) -> dict:
         "static_dirs": static_dirs_copied,
         "theme_assets": theme_assets_copied,
     }
+
+    # Create the Jinja2 Environment once for the entire build
+    theme_name = site_config.get("theme", "default")
+    source_theme_dir = os.path.join(path, theme_name)
+    global_theme_dir = os.path.join(config.THEMES_DIR, theme_name)
+    jinja_env = Environment(
+        loader=FileSystemLoader([source_theme_dir, global_theme_dir])
+    )
+
     for page_meta in pages_metadata:
         try:
             # Find which navigation item should be active
-            active_navigation = deepcopy(navigation)
+            active_item: dict | None = None
             page_url = page_meta["url"]
 
             # If page is in a subfolder (like /blog/article.html),
             # activate the section's nav item (like /blog/index.html)
             if "/" in page_url.strip("/"):
-                # Extract "blog" from "/blog/article.html"
                 section_name = page_url.split("/")[1]
                 section_url = f"/{section_name}/index.html"
-
-                # Find and activate the corresponding nav item
-                for nav_item in active_navigation:
+                for nav_item in navigation:
                     if nav_item["url"] == section_url:
-                        nav_item["active"] = True
+                        active_item = nav_item
                         break
             else:
-                # For root-level pages, activate exact match
-                for nav_item in active_navigation:
+                for nav_item in navigation:
                     if nav_item["url"] == page_url:
-                        nav_item["active"] = True
+                        active_item = nav_item
                         break
 
-            template = template_loader(
-                config["source_path"],
-                config.get("theme", "default"),
-                page_meta["config"].get("template", "page.html"),
-            )
-            page_html = template.render(
-                content=md.render(page_meta["content"]),
-                meta=page_meta["config"],
-                site=site_context,
-                navigation=active_navigation,
-                section_pages=page_meta.get("pages", []),
-            )
+            if active_item is not None:
+                active_item["active"] = True
+            try:
+                template = template_loader(
+                    site_config["source_path"],
+                    theme_name,
+                    page_meta["config"].get("template", "page.html"),
+                    env=jinja_env,
+                )
+                page_html = template.render(
+                    content=md.render(page_meta["content"]),
+                    meta=page_meta["config"],
+                    site=site_context,
+                    navigation=navigation,
+                    section_pages=page_meta.get("pages", []),
+                )
+            finally:
+                if active_item is not None:
+                    active_item["active"] = False
 
             output_filename = page_meta["filename"].replace(".md", ".html")
             output_file = os.path.join(output, output_filename)
