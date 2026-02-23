@@ -186,7 +186,9 @@ def generate_sitemap(pages_metadata: list[dict], config: dict) -> str:
     return sitemap
 
 
-def copy_static_directories(source_path: str, output_path: str) -> int:
+def copy_static_directories(
+    source_path: str, output_path: str, output_dir: str = "_build"
+) -> int:
     """Copy directories that don't have _config.yaml to output directory."""
     copied_dirs = 0
 
@@ -203,7 +205,7 @@ def copy_static_directories(source_path: str, output_path: str) -> int:
             continue
 
         # Skip hidden directories and build output
-        if item.startswith(".") or item == "_build":
+        if item.startswith(".") or item == output_dir:
             continue
 
         # Copy the directory to output
@@ -283,7 +285,8 @@ def generate_site(path: str, output: str) -> dict:
     navigation = generate_navigation(pages_metadata)
 
     # Step 3: Copy static directories (images, assets, etc.)
-    static_dirs_copied = copy_static_directories(path, output)
+    output_dir = os.path.basename(os.path.abspath(output))
+    static_dirs_copied = copy_static_directories(path, output, output_dir)
 
     # Step 4: Copy theme assets (CSS, JS, images, etc.)
     theme_assets_copied = copy_theme_assets(
