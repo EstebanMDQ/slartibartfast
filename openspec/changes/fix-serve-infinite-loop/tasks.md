@@ -10,6 +10,6 @@
 
 ## 3. Add tests
 
-- [ ] 3.1 Create `tests/test_server.py` with tests for `ReloadEventHandler` path filtering
-- [ ] 3.2 Add test for debounce behavior
-- [ ] 3.3 Add test for `copy_static_directories()` skipping the actual output directory
+- [x] 3.1 Create `tests/test_server.py` with tests for `ReloadEventHandler` path filtering
+- [x] 3.2 Add test for debounce behavior
+- [x] 3.3 Add test for `copy_static_directories()` skipping the actual output directory

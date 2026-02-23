@@ -209,10 +209,10 @@ def copy_static_directories(
             continue
 
         # Copy the directory to output
-        output_dir = os.path.join(output_path, item)
-        if os.path.exists(output_dir):
-            shutil.rmtree(output_dir)
-        shutil.copytree(item_path, output_dir)
+        dest_dir = os.path.join(output_path, item)
+        if os.path.exists(dest_dir):
+            shutil.rmtree(dest_dir)
+        shutil.copytree(item_path, dest_dir)
         copied_dirs += 1
         print(f"Copied static directory: {item}")
 
