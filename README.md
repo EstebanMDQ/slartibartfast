@@ -15,50 +15,51 @@ tries to be tidy and practical rather than overwhelmingly clever.
 
 ## Install
 
-Recommended: use Poetry (project already includes a `pyproject.toml`). From the
-project root:
+Recommended: use [uv](https://docs.astral.sh/uv/) (project already includes a
+`pyproject.toml`). From the project root:
 
 ```bash
-poetry install
+uv sync
 ```
 
-This will create a virtual environment and install runtime + dev dependencies.
+This will create a virtual environment and install runtime + dev dependencies,
+and generate `uv.lock`.
 
-Alternative: create a virtualenv and install dependencies manually:
+Alternative: create a virtualenv and install the package manually:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -U pip
-python -m pip install "typer" "jinja2" "pyyaml" "markdown-it-py[plugins]" pytest
+python -m pip install .
 ```
 
 
 ## Quick usage
 
-The package exposes a CLI via the `slarti` script (installed by Poetry)
-or you can run the Typer app directly.
+The package exposes a CLI via the `slarti` script (installed into the
+environment) or you can run the Typer app directly.
 
 Generate a site from a content directory:
 
 ```bash
-# using Poetry-managed script
-poetry run slarti generate path/to/content --output _build
+# using the uv-managed environment
+uv run slarti generate path/to/content --output _build
 
 # or run the module directly
 python -m slartibartfast.cli generate path/to/content --output _build
 ```
 
-Serve a generated site locally (serves files from the given directory on port
-8000):
+Serve a generated site locally (watches the content directory and serves the
+built site on port 8000):
 
 ```bash
-poetry run slarti serve --path _build
+uv run slarti serve path/to/content --output _build
 # or
-python -m slartibartfast.cli serve --path _build
+python -m slartibartfast.cli serve path/to/content --output _build
 ```
 
-Note: the server command uses Python's builtin `http.server` — it's fine for
+Note: the server command uses Python's builtin `http.server` - it's fine for
 local previews but not intended as a production webserver (nor does it have a
 Babel fish to translate HTTP headers).
 
@@ -119,10 +120,10 @@ Example template usage:
 
 ## Testing
 
-Run the test suite with Poetry:
+Run the test suite with uv:
 
 ```bash
-poetry run pytest -q
+uv run pytest -q
 ```
 
 Or with pytest directly if you set `PYTHONPATH` to the project root:
@@ -134,8 +135,10 @@ PYTHONPATH=. pytest -q
 ## Contributing
 
 Contributions are welcome. If you're making changes, prefer small, focused
-PRs. Add tests for new behavior and run `poetry run pytest` before opening the
-PR.
+PRs. The project uses uv for environment management, Ruff for linting and
+formatting, Bandit for security scanning, and pre-commit to run them all.
+Install the hooks with `uv run pre-commit install`, add tests for new
+behavior, and run `uv run pytest` before opening the PR.
 
 ## License
 

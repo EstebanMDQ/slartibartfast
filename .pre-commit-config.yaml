@@ -1,10 +1,16 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.1  # versión actualizada de Ruff
+    rev: v0.14.1
     hooks:
-      - id: ruff
-        args: [--fix]   # aplica correcciones automáticas (incluye isort)
-      - id: ruff-format # formateo de código (equivalente a black)
+      - id: ruff          # lint (includes isort); applies safe fixes
+        args: [--fix]
+      - id: ruff-format   # code formatting (equivalent to black)
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
