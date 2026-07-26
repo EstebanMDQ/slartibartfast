@@ -2,6 +2,7 @@
 title: Very Interesting Philosophy
 template: page.html
 published: true
+in_nav: false
 ---
 
 ## Very Interesting Philosophy

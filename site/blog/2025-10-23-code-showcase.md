@@ -2,6 +2,7 @@
 title: "Code Showcase - Beautiful Syntax Highlighting"
 description: "Demonstrating the beautiful code syntax highlighting and Mermaid diagram support in our techblog theme"
 published: true
+in_nav: false
 date: "2025-10-23"
 author: "Tech Team"
 reading_time: 5

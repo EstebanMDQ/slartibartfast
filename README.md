@@ -84,10 +84,21 @@ You can control navigation behavior with front matter:
 ---
 title: "Page Title"
 description: "Page description for navigation and SEO"
+published: true       # Required to publish (default: false, opt-in)
 nav_order: 1          # Lower numbers appear first (default: 999)
 in_nav: true          # Include in navigation menu (default: true)
 ---
 ```
+
+### Publishing and navigation defaults
+
+- **`published`** defaults to `false`. Publishing is opt-in: a page or section
+  is only generated when its front matter (or a section's `_config.yaml`) sets
+  `published: true`. A `publish_date` in the future also excludes content until
+  that date. These rules apply the same way to both pages and sections.
+- **`in_nav`** defaults to `true` for both pages and sections. Set
+  `in_nav: false` to keep an item out of the navigation menu (for example,
+  individual blog posts that are listed by their section index).
 
 ### Template context
 

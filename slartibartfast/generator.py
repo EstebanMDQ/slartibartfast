@@ -3,17 +3,21 @@ from datetime import date
 import os
 import shutil
 
-from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+# escape() only escapes output strings (&, <, >); it does not parse XML.
+from xml.sax.saxutils import escape as xml_escape  # nosec B406
+
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound, select_autoescape
 from markdown_it import MarkdownIt
+from markupsafe import Markup
 from mdit_py_plugins.footnote import footnote_plugin
-from mdit_py_plugins.front_matter import front_matter_plugin
 import yaml
 
 from . import config
 
+# Front matter is stripped once by _extract_config_header before rendering, so
+# the markdown-it front_matter plugin is intentionally not registered here.
 md = (
     MarkdownIt("commonmark", {"breaks": True, "html": True})
-    .use(front_matter_plugin)
     .use(footnote_plugin)
     .enable("table")
 )
@@ -31,12 +35,27 @@ def load_config(path: str) -> dict:
 
 
 def _extract_config_header(content: str) -> tuple[dict, str]:
-    """Extract YAML front matter from content."""
-    if content.startswith("---"):
-        end = content.find("---", 3)
-        if end != -1:
-            front_matter = content[3:end].strip()
-            return (yaml.safe_load(front_matter), content[end + 3 :].lstrip())
+    """Extract YAML front matter delimited by a leading and a line-anchored
+    closing ``---``.
+
+    Only a ``---`` on its own line closes the block, so a thematic break in the
+    body or a ``---`` inside a YAML value does not truncate parsing. Returns an
+    empty dict and the original content when no valid front matter is present.
+    """
+    lines = content.splitlines(keepends=True)
+    if not lines or lines[0].strip() != "---":
+        return ({}, content)
+
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            front_matter = "".join(lines[1:i])
+            body = "".join(lines[i + 1 :])
+            parsed = yaml.safe_load(front_matter) if front_matter.strip() else {}
+            if not isinstance(parsed, dict):
+                parsed = {}
+            return (parsed, body.lstrip("\n"))
+
+    # No closing delimiter: treat the whole file as body content.
     return ({}, content)
 
 
@@ -63,7 +82,10 @@ def template_loader(source_path: str, theme: str, template_name: str):
     if not os.path.isdir(theme_dir) and not os.path.isdir(source_theme_dir):
         raise FileNotFoundError(f"Theme not found: {theme}")
 
-    env = Environment(loader=FileSystemLoader([source_theme_dir, theme_dir]))
+    env = Environment(
+        loader=FileSystemLoader([source_theme_dir, theme_dir]),
+        autoescape=select_autoescape(default=True, default_for_string=True),
+    )
     try:
         return env.get_template(template_name)
     except TemplateNotFound as exc:
@@ -78,11 +100,17 @@ def collect_pages_metadata(path: str, subfolder: str = "") -> list[dict]:
     if subfolder:
         subfolder = f"{subfolder}/"
     for filename in os.listdir(path):
+        # An entry is either a section directory or a Markdown file, never both.
         if os.path.isdir(os.path.join(path, filename)):
             try:
                 section_config = load_config(os.path.join(path, filename))
             except FileNotFoundError:
                 continue
+
+            # Sections respect the same publish/publish_date rules as pages.
+            if not should_process(section_config):
+                continue
+
             section_path = os.path.join(path, filename)
             section_pages_metadata = collect_pages_metadata(
                 section_path, subfolder=filename
@@ -104,7 +132,7 @@ def collect_pages_metadata(path: str, subfolder: str = "") -> list[dict]:
                 "content": section_config.get("content", ""),
             }
             pages_metadata.append(page_meta)
-        if filename.endswith(".md"):
+        elif filename.endswith(".md"):
             filepath = os.path.join(path, filename)
             with open(filepath, "r") as file:
                 page_config, content = _extract_config_header(file.read())
@@ -117,21 +145,21 @@ def collect_pages_metadata(path: str, subfolder: str = "") -> list[dict]:
             default_title = filename.replace(".md", "").replace("-", " ").title()
             page_meta = {
                 "filename": f"{subfolder}{filename}",
-                "filepath": f"{subfolder}{filepath}",
+                "filepath": filepath,
                 "url": f"/{subfolder}{filename.replace('.md', '.html')}",
                 "title": page_config.get("title", default_title),
                 "description": page_config.get("description", ""),
                 "date": page_config.get("date", date.today().isoformat()),
                 "publish_date": page_config.get("publish_date", None),
                 "nav_order": page_config.get("nav_order", 999),
-                "in_nav": page_config.get("in_nav", False),
+                "in_nav": page_config.get("in_nav", True),
                 "content": content,
                 "config": page_config,
             }
             pages_metadata.append(page_meta)
 
-    # Sort pages by nav_order, then by title
-    # pages_metadata.sort(key=lambda x: (x["nav_order"], x["title"]))
+    # Sort pages deterministically by nav_order, then by title
+    pages_metadata.sort(key=lambda x: (x["nav_order"], x["title"]))
     return pages_metadata
 
 
@@ -172,10 +200,11 @@ def generate_sitemap(pages_metadata: list[dict], config: dict) -> str:
         else:
             lastmod_str = date.today().isoformat()
 
+        # Escape values so characters like & produce well-formed XML.
         sitemap_entries.append(f"""
     <url>
-        <loc>{url}</loc>
-        <lastmod>{lastmod_str}</lastmod>
+        <loc>{xml_escape(url)}</loc>
+        <lastmod>{xml_escape(lastmod_str)}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>""")
@@ -334,7 +363,9 @@ def generate_site(path: str, output: str) -> dict:
                 page_meta["config"].get("template", "page.html"),
             )
             page_html = template.render(
-                content=md.render(page_meta["content"]),
+                # Rendered Markdown is trusted authored HTML; mark it safe so
+                # autoescape does not double-escape it. Metadata stays escaped.
+                content=Markup(md.render(page_meta["content"])),  # nosec B704
                 meta=page_meta["config"],
                 site=site_context,
                 navigation=active_navigation,
