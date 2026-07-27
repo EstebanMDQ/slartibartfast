@@ -15,49 +15,54 @@ tries to be tidy and practical rather than overwhelmingly clever.
 
 ## Install
 
-Recommended: use [uv](https://docs.astral.sh/uv/) (project already includes a
-`pyproject.toml`). From the project root:
+> Not yet on PyPI under an available name (the `slartibartfast` name is taken by
+> an unrelated package). Until it is published, install from source or Git. See
+> [RELEASING.md](RELEASING.md) for the publishing plan.
+
+Install the `slarti` CLI as a tool with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv sync
+# from a local checkout
+uv tool install .
+
+# or straight from Git
+uv tool install git+https://github.com/informalthinkers/slartibartfast
 ```
 
-This will create a virtual environment and install runtime + dev dependencies,
-and generate `uv.lock`.
-
-Alternative: create a virtualenv and install the package manually:
+Or with pip:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -U pip
-python -m pip install .
+pip install .
+# or
+pip install git+https://github.com/informalthinkers/slartibartfast
 ```
 
+Once published to PyPI, installation will be:
+
+```bash
+pip install slartibartfast-ssg   # distribution name; the CLI stays `slarti`
+```
 
 ## Quick usage
 
-The package exposes a CLI via the `slarti` script (installed into the
-environment) or you can run the Typer app directly.
+After installing, the `slarti` command is available directly.
 
 Generate a site from a content directory:
 
 ```bash
-# using the uv-managed environment
-uv run slarti generate path/to/content --output _build
-
-# or run the module directly
-python -m slartibartfast.cli generate path/to/content --output _build
+slarti generate path/to/content --output _build
 ```
 
 Serve a generated site locally (watches the content directory and serves the
 built site on port 8000):
 
 ```bash
-uv run slarti serve path/to/content --output _build
-# or
-python -m slartibartfast.cli serve path/to/content --output _build
+slarti serve path/to/content --output _build
 ```
+
+Working from a source checkout with `uv sync` instead? Prefix commands with
+`uv run` (e.g. `uv run slarti generate ...`), or run the module directly with
+`python -m slartibartfast.cli generate ...`.
 
 Note: the server command uses Python's builtin `http.server` - it's fine for
 local previews but not intended as a production webserver (nor does it have a
@@ -65,9 +70,11 @@ Babel fish to translate HTTP headers).
 
 ## Themes and templates
 
-Themes live in the `themes/` directory. A minimal theme is provided at
-`themes/minimal`. Templates are standard Jinja2 templates; pages may specify a
-`template` in their front matter to pick a different template file.
+Themes are bundled with the package under `slartibartfast/themes/`; `default`
+and `minimal` themes are provided. A site directory can also override a theme by
+placing a directory of the same name alongside its content. Templates are
+standard Jinja2 templates; pages may specify a `template` in their front matter
+to pick a different template file.
 
 ## Navigation and Sitemap
 
@@ -145,11 +152,20 @@ PYTHONPATH=. pytest -q
 
 ## Contributing
 
-Contributions are welcome. If you're making changes, prefer small, focused
-PRs. The project uses uv for environment management, Ruff for linting and
-formatting, Bandit for security scanning, and pre-commit to run them all.
-Install the hooks with `uv run pre-commit install`, add tests for new
-behavior, and run `uv run pytest` before opening the PR.
+Contributions are welcome. Set up a development environment with
+[uv](https://docs.astral.sh/uv/):
+
+```bash
+uv sync
+```
+
+If you're making changes, prefer small, focused PRs. The project uses uv for
+environment management, Ruff for linting and formatting, Bandit for security
+scanning, and pre-commit to run them all. Install the hooks with
+`uv run pre-commit install`, add tests for new behavior, and run
+`uv run pytest` before opening the PR.
+
+See [RELEASING.md](RELEASING.md) for how releases are built and published.
 
 ## License
 
