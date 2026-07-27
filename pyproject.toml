@@ -6,6 +6,21 @@ authors = [{ name = "Esteban Soler", email = "esteban@informalthinkers.com" }]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
+keywords = ["static-site-generator", "markdown", "jinja2", "cli", "ssg"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: Site Management",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
 dependencies = [
     "typer>=0.19.2,<0.20.0",
     "jinja2>=3.1.6,<4.0.0",
@@ -13,6 +28,11 @@ dependencies = [
     "pyyaml>=6.0.3,<7.0.0",
     "markdown-it-py[linkify,plugins]>=4.0.0,<5.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/informalthinkers/slartibartfast"
+Repository = "https://github.com/informalthinkers/slartibartfast"
+Issues = "https://github.com/informalthinkers/slartibartfast/issues"
 
 [project.scripts]
 slarti = "slartibartfast.cli:app"

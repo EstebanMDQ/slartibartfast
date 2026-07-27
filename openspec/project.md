@@ -41,7 +41,7 @@ Key goals:
 - `generator.py` - Core site generation logic (page collection, rendering, sitemap, asset copying)
 - `config.py` - Global constants (theme dir, output dir, base dir)
 - `server.py` - Local dev server with watchdog-based auto-regeneration
-- Themes live in `themes/` at project root; each theme is a directory of Jinja2 templates
+- Themes are bundled inside the package at `slartibartfast/themes/`; each theme is a directory of Jinja2 templates. A site directory may override a theme by name from its own folder.
 - Content directories use `_config.yaml` for section configuration
 - Pages use YAML front matter for per-page metadata (`title`, `description`, `nav_order`, `in_nav`, `published`, `publish_date`, `template`)
 
