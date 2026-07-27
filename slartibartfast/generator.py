@@ -215,9 +215,19 @@ def generate_sitemap(pages_metadata: list[dict], config: dict) -> str:
     return sitemap
 
 
-def copy_static_directories(source_path: str, output_path: str) -> int:
-    """Copy directories that don't have _config.yaml to output directory."""
+def copy_static_directories(
+    source_path: str, output_path: str, output_dir_name: str | None = None
+) -> int:
+    """Copy directories that don't have _config.yaml to output directory.
+
+    ``output_dir_name`` is the directory name to skip so the output directory is
+    never copied into itself (which matters when it lives inside the source).
+    Defaults to the basename of ``output_path``.
+    """
     copied_dirs = 0
+
+    if output_dir_name is None:
+        output_dir_name = os.path.basename(os.path.normpath(output_path))
 
     for item in os.listdir(source_path):
         item_path = os.path.join(source_path, item)
@@ -231,8 +241,8 @@ def copy_static_directories(source_path: str, output_path: str) -> int:
         if os.path.exists(config_file):
             continue
 
-        # Skip hidden directories and build output
-        if item.startswith(".") or item == "_build":
+        # Skip hidden directories and the build output directory
+        if item.startswith(".") or item == output_dir_name:
             continue
 
         # Copy the directory to output

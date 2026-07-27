@@ -120,8 +120,8 @@ def test_copy_static_directories_skips_directories_with_config(tmp_path):
     assert not (out / "blog").exists()
 
 
-def test_copy_static_directories_skips_hidden_and_build_directories(tmp_path):
-    """Test that hidden directories and _build are skipped."""
+def test_copy_static_directories_skips_hidden_and_output_directories(tmp_path):
+    """Test that hidden directories and the output directory are skipped."""
     src = tmp_path / "site"
     src.mkdir()
     out = tmp_path / "out"
@@ -132,7 +132,7 @@ def test_copy_static_directories_skips_hidden_and_build_directories(tmp_path):
     hidden_dir.mkdir()
     (hidden_dir / "secret.txt").write_text("secret content", encoding="utf-8")
 
-    # Create _build directory (should be skipped)
+    # Create output directory inside source (should be skipped by name)
     build_dir = src / "_build"
     build_dir.mkdir()
     (build_dir / "index.html").write_text("<html></html>", encoding="utf-8")
@@ -142,14 +142,38 @@ def test_copy_static_directories_skips_hidden_and_build_directories(tmp_path):
     assets_dir.mkdir()
     (assets_dir / "style.css").write_text("body { color: blue; }", encoding="utf-8")
 
-    # Copy static directories
-    copied_count = generator.copy_static_directories(str(src), str(out))
+    # Copy static directories, telling it the output directory name to skip
+    copied_count = generator.copy_static_directories(str(src), str(out), "_build")
 
     # Verify only the assets directory was copied
     assert copied_count == 1
     assert (out / "assets").exists()
     assert not (out / ".hidden").exists()
     assert not (out / "_build").exists()
+
+
+def test_copy_static_directories_skips_custom_output_directory_name(tmp_path):
+    """Test that a custom output directory name is skipped dynamically."""
+    src = tmp_path / "site"
+    src.mkdir()
+    out = tmp_path / "public"
+    out.mkdir()
+
+    # A directory matching a custom output name (should be skipped)
+    public_dir = src / "public"
+    public_dir.mkdir()
+    (public_dir / "index.html").write_text("<html></html>", encoding="utf-8")
+
+    # A normal static directory (should be copied)
+    assets_dir = src / "assets"
+    assets_dir.mkdir()
+    (assets_dir / "style.css").write_text("body {}", encoding="utf-8")
+
+    copied_count = generator.copy_static_directories(str(src), str(out), "public")
+
+    assert copied_count == 1
+    assert (out / "assets").exists()
+    assert not (out / "public").exists()
 
 
 def test_copy_static_directories_overwrites_existing_directories(tmp_path):
